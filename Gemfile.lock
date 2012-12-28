@@ -2,7 +2,11 @@ GEM
   remote: http://rubygems.org/
   specs:
     diff-lcs (1.1.2)
-    nokogiri (1.4.4)
+    fuubar (1.1.0)
+      rspec (~> 2.0)
+      rspec-instafail (~> 0.2.0)
+      ruby-progressbar (~> 1.0.0)
+    ox (1.8.1)
     rspec (2.4.0)
       rspec-core (~> 2.4.0)
       rspec-expectations (~> 2.4.0)
@@ -10,11 +14,14 @@ GEM
     rspec-core (2.4.0)
     rspec-expectations (2.4.0)
       diff-lcs (~> 1.1.2)
+    rspec-instafail (0.2.4)
     rspec-mocks (2.4.0)
+    ruby-progressbar (1.0.2)
 
 PLATFORMS
   ruby
 
 DEPENDENCIES
-  nokogiri (>= 1.4.4)
+  fuubar
+  ox
   rspec (>= 2.4.0)

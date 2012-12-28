@@ -190,7 +190,7 @@ describe "SAXMachine" do
           end
 
           it "should save the text of an element that has matching attributes plus a few more" do
-            document = @klass.parse("<xml><link>no match</link><link asdf='jkl' foo='bar'>match</link>")
+            document = @klass.parse("<xml><link>no match</link><link asdf='jkl' foo='bar'>match</link></xml>")
             document.link.should == "match"
           end
         end
@@ -510,7 +510,7 @@ describe "SAXMachine" do
       end
     end # before
 
-    it "should parse the url" do
+    it "should parse the url", :focus => true do
       f = Atom.parse(@xml)
       f.url.should == "http://www.pauldix.net/"
     end

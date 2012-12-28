@@ -9,4 +9,8 @@ $LOAD_PATH.unshift(path) unless $LOAD_PATH.include?(path)
 require "sax-machine"
 
 # Spec::Runner.configure do |config|
+# 
+
+# RSpec.configure do |config|
+#   config.filter_run :focus => true
 # end

@@ -1,12 +1,17 @@
-require "nokogiri"
+require "ox"
+# require "nokogiri"
 
 module SAXMachine
-  class SAXHandler < Nokogiri::XML::SAX::Document
+  class SAXHandler < ::Ox::Sax
+  # class SAXHandler < Nokogiri::XML::SAX::Document
     attr_reader :stack
 
     def initialize(object)
       @stack = [[object, nil, ""]]
       @parsed_configs = []
+
+      @intermediate_stack = []
+      @value_stack = []
     end
 
     # characters might be called multiple times according to docs
@@ -18,14 +23,44 @@ module SAXMachine
       end
     end
 
+    def text(string)
+      @intermediate_stack.last[ :value ] ||= ""
+      @intermediate_stack.last[ :value ] << string
+    end
+
     def cdata_block(string)
       characters(string)
     end
 
-    def start_element(name, attrs = [])
+    def cdata(string)
+      text(string)
+    end
+
+    def attr( name, value )
+      return unless @intermediate_stack.last
+      @intermediate_stack.last[ :attrs ] ||= []
+      @intermediate_stack.last[ :attrs ] << [ "#{name}", "#{value}" ]
+    end
+
+    def process_intermediate_element
+      return unless @intermediate_stack.size > 0
+
+      top = @intermediate_stack.pop
+      start_element( top[:name].to_s, top.fetch( :attrs, [] ) )
+
+      value = top[ :value ]
+      stack.last.push( value )
+    end
+
+    def start_element( name, attrs = nil )
+      if attrs.nil?
+        process_intermediate_element
+        @intermediate_stack.push( :name => name )
+        return
+      end
+
       object, config, _ = stack.last
       sax_config = object.class.respond_to?(:sax_config) ? object.class.sax_config : nil
-        
       if sax_config
         if collection_config = sax_config.collection_config(name, attrs)
           stack.push [object = collection_config.data_class.new, collection_config]
@@ -46,7 +81,6 @@ module SAXMachine
         if !collection_config && element_config = sax_config.element_config_for_tag(name, attrs)
           new_object = element_config.data_class ? element_config.data_class.new : object
           stack.push [new_object, element_config]
-
           if (attribute_config = new_object.class.respond_to?(:sax_config) && new_object.class.sax_config.attribute_configs_for_element(attrs))
             attribute_config.each { |ac| new_object.send(ac.setter, ac.value_from_attrs(attrs)) }
           end
@@ -55,8 +89,10 @@ module SAXMachine
     end
 
     def end_element(name)
+      process_intermediate_element
+
       (object, tag_config, _), (element, config, value) = stack[-2..-1]
-      return unless stack.size > 1 && config && config.name == name
+      return unless stack.size > 1 && config && config.name == "#{name}"
       stack.pop
 
       unless parsed_config?(object, config)
@@ -66,7 +102,7 @@ module SAXMachine
 
         if config.respond_to?(:accessor)
           subconfig = element.class.sax_config if element.class.respond_to?(:sax_config)
-          if econf = subconfig.element_config_for_tag(name,[])
+          if econf = subconfig.element_config_for_tag("#{name}",[])
             element.send(econf.setter, value) unless econf.value_configured?
           end
           object.send("add_#{config.accessor}", element)

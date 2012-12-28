@@ -1,4 +1,5 @@
-require "nokogiri"
+require "ox"
+# require "nokogiri"
 
 module SAXMachine
   def self.included(base)
@@ -9,10 +10,13 @@ module SAXMachine
     if options[:lazy]
       require 'fiber'
       @parser = Fiber.new do 
-        Nokogiri::XML::SAX::Parser.new( SAXHandler.new(self) ).parse(thing)
+        # TODO if block_given to determine if we're running default Noko or custom...
+        Ox.sax_parse( SAXHandler.new( self ), StringIO.new( thing ) )
+        # Nokogiri::XML::SAX::Parser.new( SAXHandler.new(self) ).parse(thing)
       end
     else
-      Nokogiri::XML::SAX::Parser.new( SAXHandler.new(self) ).parse(thing)
+      Ox.sax_parse( SAXHandler.new( self ), StringIO.new( thing ) )
+      # Nokogiri::XML::SAX::Parser.new( SAXHandler.new(self) ).parse(thing)
     end
     self
   end

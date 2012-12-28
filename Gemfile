@@ -1,4 +1,5 @@
 source "http://rubygems.org"
 
-gem 'nokogiri', '>= 1.4.4'
+gem 'ox'
 gem 'rspec', '>= 2.4.0'
+gem 'fuubar'
